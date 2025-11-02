@@ -1,0 +1,231 @@
+  include div_mul.asm
+
+  const noscore = 1
+
+  const BLACK = $00
+  const WHITE = $0E
+  const RED = $44
+  const PINK = $4A
+  const BLUE = $84
+
+  ; playfield
+  COLUPF = WHITE
+
+  playfield:
+    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    X..............................X
+    X..............................X
+    X..............................X
+    ...............XX..............X
+    X..............................X
+    X..............................X
+    X..............................X
+    X..............................X
+    X..............................X
+    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    ................................
+end
+
+  ; missle pfread offset
+  const scr_left_x = 2
+  const scr_right_x = 158
+  const scr_top_y = 4
+  const scr_bot_y = 88
+
+  ; horizontal columns
+  const pf_num_columns = 32
+  const pf_column_width = 4
+  const pf_scr_x_offset = 18
+  const pf_column0x_left = pf_scr_x_offset
+  const pf_column0x_right = pf_column0x_left + pf_column_width
+  const pf_column31x_left = ((pf_num_columns - 1) * pf_column_width) + pf_column0x_left
+  const pf_column31x_right = ((pf_num_columns - 1) * pf_column_width) + pf_column0x_right
+
+  ; veritcal rows
+  const pf_num_rows = 11
+  const pf_row_height = 8
+  const pf_scr_y_offset = 3
+  const pf_row0_top = pf_scr_y_offset
+  const pf_row0_bottom = pf_scr_y_offset + pf_row_height
+  const pf_row10_top = ((pf_num_rows - 1) * pf_row_height)
+  
+  ; missle 0
+  COLUP0 = BLUE
+  const missle0_height = 4
+  missile0height = missle0_height - 1
+  const missle0_width = 4  
+  missile0x = 70
+  missile0y = 40
+
+  ; missle 1
+  COLUP1 = PINK
+  const missle1_height = 4
+  missile1height = missle1_height - 1
+  const missle1_width = 4  
+  missile1x = 90
+  missile1y = 40
+
+  dim coll_detect_x = b
+  dim coll_detect_y = c
+
+mainloop
+  NUSIZ0 = %00100000  ; four pixels wide
+  NUSIZ1 = %00100000  ; four pixels wide
+
+joy0_up
+  if !joy0up goto skip_joy0_up
+
+    if missile0y <= scr_top_y then goto skip_joy0_up
+
+      ; calculate top y pos
+      coll_detect_y = (((missile0y - pf_scr_y_offset) - 1) / 8)
+
+      ; get the left right x pos
+      coll_detect_x = ((missile0x - pf_scr_x_offset) / 4)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_up
+
+      ; get the right x pos
+      coll_detect_x = ((missile0x - pf_scr_x_offset + missle0_width - 1) / 4)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_up
+
+        missile0y = missile0y - 1
+
+skip_joy0_up
+
+joy0_down
+  if !joy0down goto skip_joy0_down
+
+    if missile0y >= scr_bot_y then goto skip_joy0_down
+
+      ; calculate bottom y pos
+      coll_detect_y = ((missile0y - pf_scr_y_offset + missle0_height) / 8)
+
+      ; get the right x pos
+      coll_detect_x = ((missile0x - pf_scr_x_offset + missle0_width - 1) / 4)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_down
+
+      ; get the left x pos
+      coll_detect_x = ((missile0x - pf_scr_x_offset) / 4)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_down
+
+        missile0y = missile0y + 1
+
+skip_joy0_down
+
+joy0_left
+  if !joy0left goto skip_joy0_left
+
+    if missile0x <= scr_left_x then goto skip_joy0_left
+      ; get the left x
+      coll_detect_x = (((missile0x - pf_scr_x_offset) - 1) / 4)
+
+      ; get the top y
+      coll_detect_y = ((missile0y - pf_scr_y_offset) / 8)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_left
+
+      ; get the bottom y
+      coll_detect_y  = (((missile0y - pf_scr_y_offset + missle0_height) - 1) / 8)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_left
+
+        missile0x = missile0x - 1
+
+skip_joy0_left
+
+joy0_right
+  if !joy0right goto skip_joy0_right
+
+    if missile0x >= scr_right_x then goto skip_joy0_right
+      ; get the right x
+      coll_detect_x = (((missile0x - pf_scr_x_offset + missle0_width - 1) + 1) / 4)
+
+      ; get the top y
+      coll_detect_y = ((missile0y - pf_scr_y_offset) / 8)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_right
+
+      ; get the bottom y
+      coll_detect_y = (((missile0y - pf_scr_y_offset + missle0_height) - 1) / 8)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_right
+
+        missile0x = missile0x + 1
+
+skip_joy0_right
+
+joy1_up
+  if !joy1up goto skip_joy1_up
+
+    if missile1y <= scr_top_y then goto skip_joy1_up
+
+      ; calculate top y pos
+      coll_detect_y = ((missile1y - pf_scr_y_offset - 2) / 8)
+
+      ; get the left right x pos
+      coll_detect_x = ((missile1x - pf_scr_x_offset) / 4)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_up
+
+      ; get the right x pos
+      coll_detect_x = ((missile1x - pf_scr_x_offset + missle1_width - 1) / 4)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_up
+
+        missile1y = missile1y - 1
+
+skip_joy1_up
+
+joy1_down
+  if !joy1down goto skip_joy1_down
+
+    if missile1y >= scr_bot_y then goto skip_joy1_down
+
+      ; calculate bottom y pos
+      coll_detect_y = ((missile1y - pf_scr_y_offset + missle1_height - 1) / 8)
+
+      ; get the right x pos
+      coll_detect_x = ((missile1x - pf_scr_x_offset + missle1_width - 1) / 4)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_down
+
+      ; get the left x pos
+      coll_detect_x = ((missile1x - pf_scr_x_offset) / 4)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_down
+
+        missile1y = missile1y + 1
+
+skip_joy1_down
+
+joy1_left
+  if !joy1left goto skip_joy1_left
+    if missile1x <= scr_left_x then goto skip_joy1_left
+      ; get the left x
+      coll_detect_x = (((missile1x - pf_scr_x_offset) - 1) / 4)
+
+      ; get the top y
+      coll_detect_y = ((missile1y - pf_scr_y_offset - 1) / 8)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_left
+
+      ; get the bottom y
+      coll_detect_y = (((missile1y - pf_scr_y_offset + missle1_height) - 2) / 8)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_left
+
+        missile1x = missile1x - 1
+
+skip_joy1_left
+
+joy1_right
+  if !joy1right goto skip_joy1_right
+
+    if missile1x >= scr_right_x then goto skip_joy1_right
+      ; get the right x
+      coll_detect_x = (((missile1x - pf_scr_x_offset + missle1_width - 1) + 1) / 4)
+
+      ; get the top y
+      coll_detect_y = ((missile1y - pf_scr_y_offset - 1) / 8)
+      if pfread(coll_detect_x,coll_detect_y) then goto skip_joy1_right
+
+      ; get the bottom y
+      coll_detect_y = (((missile1y - pf_scr_y_offset + missle1_height) - 2) / 8)
+      if pfread(coll_detect_x,coll_detect_y) then goto skip_joy1_right
+
+        missile1x = missile1x + 1
+
+skip_joy1_right
+
+  drawscreen
+  goto mainloop
