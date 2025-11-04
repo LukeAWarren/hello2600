@@ -48,12 +48,12 @@ end
   const pf_row0_top = pf_scr_y_offset
   const pf_row0_bottom = pf_scr_y_offset + pf_row_height
   const pf_row10_top = ((pf_num_rows - 1) * pf_row_height)
-  
+
   ; missle 0
   COLUP0 = BLUE
   const missle0_height = 4
   missile0height = missle0_height - 1
-  const missle0_width = 4  
+  const missle0_width = 4
   missile0x = 70
   missile0y = 40
 
@@ -61,7 +61,7 @@ end
   COLUP1 = PINK
   const missle1_height = 4
   missile1height = missle1_height - 1
-  const missle1_width = 4  
+  const missle1_width = 4
   missile1x = 90
   missile1y = 40
 
