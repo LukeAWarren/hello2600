@@ -73,164 +73,201 @@ end
   dim coll_detect_x = b
   dim coll_detect_y = c
 
+  ; frames to wait before auto-repeat
+  const j_debounce_delay = 10
+
+  ; input debouncing for joystick 0
+  dim j0_debounce_up_down = d
+  dim j0_debounce_left_right = e
+
+  ; input debouncing for joystick 1
+  dim j1_debounce_up_down = f
+  dim j1_debounce_left_right = g
+
 mainloop
   NUSIZ0 = missle0_width_bin ; four pixels wide
   NUSIZ1 = missle1_width_bin ; four pixels wide
 
-joy0_up
-  if !joy0up goto skip_joy0_up
+  if !joy0up && !joy0down then j0_debounce_up_down = 0
 
-    if missile0y <= scr_top_y then goto skip_joy0_up
+j0_up
+
+  ; the joy up is not pressed then always set debounce counter 0
+  if !joy0up then goto skip_j0_up
+
+    if missile0y <= scr_top_y then goto skip_j0_up
 
       ; calculate top y pos
       coll_detect_y = ((missile0y - m0_y_top_edge) / 8)
 
       ; get the left x pos
       coll_detect_x = ((missile0x - pf_scr_x_offset) / 4)
-      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_up
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j0_up
 
       ; get the right x pos
       coll_detect_x = ((missile0x - m_x_right_edge) / 4)
-      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_up
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j0_up
 
-        missile0y = missile0y - 1
+      if j0_debounce_up_down = 0 || j0_debounce_up_down > j_debounce_delay then missile0y = missile0y - 1
 
-skip_joy0_up
+      j0_debounce_up_down = j0_debounce_up_down + 1
 
-joy0_down
-  if !joy0down goto skip_joy0_down
+skip_j0_up
 
-    if missile0y >= scr_bot_y then goto skip_joy0_down
+j0_down
+  if !joy0down goto skip_j0_down
+
+    if missile0y >= scr_bot_y then goto skip_j0_down
 
       ; calculate bottom y pos
       coll_detect_y = ((missile0y - m0_y_bottom_edge) / 8)
 
       ; get the right x pos
       coll_detect_x = ((missile0x - m_x_right_edge) / 4)
-      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_down
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j0_down
 
       ; get the left x pos
       coll_detect_x = ((missile0x - pf_scr_x_offset) / 4)
-      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_down
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j0_down
 
-        missile0y = missile0y + 1
+      if j0_debounce_up_down = 0 || j0_debounce_up_down > j_debounce_delay then missile0y = missile0y + 1
 
-skip_joy0_down
+      j0_debounce_up_down = j0_debounce_up_down + 1
 
-joy0_left
-  if !joy0left goto skip_joy0_left
+skip_j0_down
 
-    if missile0x <= scr_left_x then goto skip_joy0_left
+  if !joy0left && !joy0right then j0_debounce_left_right = 0
+
+j0_left
+  if !joy0left goto skip_j0_left
+
+    if missile0x <= scr_left_x then goto skip_j0_left
       ; get the left x
       coll_detect_x = ((missile0x - m_x_left_edge) / 4)
 
       ; get the top y
       coll_detect_y = ((missile0y - pf_scr_y_offset) / 8)
-      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_left
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j0_left
 
       ; get the bottom y
       coll_detect_y = ((missile0y - m0_y_bottom_edge_minus1) / 8)
-      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_left
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j0_left
 
-        missile0x = missile0x - 1
+      if j0_debounce_left_right = 0 || j0_debounce_left_right > j_debounce_delay then missile0x = missile0x - 1
 
-skip_joy0_left
+      j0_debounce_left_right = j0_debounce_left_right + 1
 
-joy0_right
-  if !joy0right goto skip_joy0_right
+skip_j0_left
 
-    if missile0x >= scr_right_x then goto skip_joy0_right
+j0_right
+  if !joy0right goto skip_j0_right
+
+    if missile0x >= scr_right_x then goto skip_j0_right
       ; get the right x
       coll_detect_x = ((missile0x - m_x_right_edge_plus1) / 4)
 
       ; get the top y
       coll_detect_y = ((missile0y - pf_scr_y_offset) / 8)
-      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_right
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j0_right
 
       ; get the bottom y
       coll_detect_y = ((missile0y - m0_y_bottom_edge_minus1) / 8)
-      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_right
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j0_right
 
-        missile0x = missile0x + 1
+      if j0_debounce_left_right = 0 || j0_debounce_left_right > j_debounce_delay then missile0x = missile0x + 1
 
-skip_joy0_right
+      j0_debounce_left_right = j0_debounce_left_right + 1
 
-joy1_up
-  if !joy1up goto skip_joy1_up
+skip_j0_right
 
-    if missile1y <= scr_top_y then goto skip_joy1_up
+  if !joy1up && !joy1down then j1_debounce_up_down = 0
+
+j1_up
+  if !joy1up goto skip_j1_up
+
+    if missile1y <= scr_top_y then goto skip_j1_up
 
       ; calculate top y pos
       coll_detect_y = ((missile1y - m1_y_top_edge) / 8)
 
       ; get the left x pos
       coll_detect_x = ((missile1x - pf_scr_x_offset) / 4)
-      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_up
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j1_up
 
       ; get the right x pos
       coll_detect_x = ((missile1x - m_x_right_edge) / 4)
-      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_up
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j1_up
 
-        missile1y = missile1y - 1
+      if j1_debounce_up_down = 0 || j1_debounce_up_down > j_debounce_delay then missile1y = missile1y - 1
 
-skip_joy1_up
+      j1_debounce_up_down = j1_debounce_up_down + 1
 
-joy1_down
-  if !joy1down goto skip_joy1_down
+skip_j1_up
 
-    if missile1y >= scr_bot_y then goto skip_joy1_down
+j1_down
+  if !joy1down goto skip_j1_down
+
+    if missile1y >= scr_bot_y then goto skip_j1_down
 
       ; calculate bottom y pos
       coll_detect_y = ((missile1y - m1_y_bottom_edge_minus1) / 8)
 
       ; get the right x pos
       coll_detect_x = ((missile1x - m_x_right_edge) / 4)
-      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_down
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j1_down
 
       ; get the left x pos
       coll_detect_x = ((missile1x - pf_scr_x_offset) / 4)
-      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_down
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j1_down
 
-        missile1y = missile1y + 1
+      if j1_debounce_up_down = 0 || j1_debounce_up_down > j_debounce_delay then missile1y = missile1y + 1
 
-skip_joy1_down
+      j1_debounce_up_down = j1_debounce_up_down + 1
 
-joy1_left
-  if !joy1left goto skip_joy1_left
-    if missile1x <= scr_left_x then goto skip_joy1_left
+skip_j1_down
+
+  if !joy1left && !joy1right then j1_debounce_left_right = 0
+
+j1_left
+  if !joy1left goto skip_j1_left
+    if missile1x <= scr_left_x then goto skip_j1_left
       ; get the left x
       coll_detect_x = ((missile1x - m_x_left_edge) / 4)
 
       ; get the top y
       coll_detect_y = ((missile1y - m1_y_top_edge_minus1) / 8)
-      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_left
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j1_left
 
       ; get the bottom y
       coll_detect_y = ((missile1y - m1_y_bottom_edge_minus2) / 8)
-      if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_left
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j1_left
 
-        missile1x = missile1x - 1
+      if j1_debounce_left_right = 0 || j1_debounce_left_right > j_debounce_delay then missile1x = missile1x - 1
 
-skip_joy1_left
+      j1_debounce_left_right = j1_debounce_left_right + 1
 
-joy1_right
-  if !joy1right goto skip_joy1_right
+skip_j1_left
 
-    if missile1x >= scr_right_x then goto skip_joy1_right
+j1_right
+  if !joy1right goto skip_j1_right
+
+    if missile1x >= scr_right_x then goto skip_j1_right
       ; get the right x
       coll_detect_x = ((missile1x - m_x_right_edge_plus1) / 4)
 
       ; get the top y
       coll_detect_y = ((missile1y - m1_y_top_edge_minus1) / 8)
-      if pfread(coll_detect_x,coll_detect_y) then goto skip_joy1_right
+      if pfread(coll_detect_x,coll_detect_y) then goto skip_j1_right
 
       ; get the bottom y
       coll_detect_y = ((missile1y - m1_y_bottom_edge_minus2) / 8)
-      if pfread(coll_detect_x,coll_detect_y) then goto skip_joy1_right
+      if pfread(coll_detect_x,coll_detect_y) then goto skip_j1_right
 
-        missile1x = missile1x + 1
+      if j1_debounce_left_right = 0 || j1_debounce_left_right > j_debounce_delay then missile1x = missile1x + 1
 
-skip_joy1_right
+      j1_debounce_left_right = j1_debounce_left_right + 1
+
+skip_j1_right
 
   drawscreen
   goto mainloop
