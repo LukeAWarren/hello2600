@@ -2,9 +2,7 @@
 
   const noscore = 1
 
-  const BLACK = $00
   const WHITE = $0E
-  const RED = $44
   const PINK = $4A
   const BLUE = $84
 
@@ -32,27 +30,24 @@ end
   const scr_top_y = 4
   const scr_bot_y = 88
 
-  ; horizontal columns
-  const pf_num_columns = 32
-  const pf_column_width = 4
+  ; missile dimensions (defined first, used in collision constants)
+  const missle0_height = 4
+  const missle0_width = 4
+  const missle0_width_bin = %00100000
+  const missle1_height = 4
+  const missle1_width = 4
+  const missle1_width_bin = %00100000
+
+  ; horizontal offset
   const pf_scr_x_offset = 18
-  const pf_column0x_left = pf_scr_x_offset
-  const pf_column0x_right = pf_column0x_left + pf_column_width
-  const pf_column31x_left = ((pf_num_columns - 1) * pf_column_width) + pf_column0x_left
-  const pf_column31x_right = ((pf_num_columns - 1) * pf_column_width) + pf_column0x_right
 
   ; optimized X collision constants (same for both missiles)
   const m_x_left_edge = pf_scr_x_offset + 1          ; = 19
   const m_x_right_edge = pf_scr_x_offset - missle0_width + 1  ; = 15
   const m_x_right_edge_plus1 = m_x_right_edge - 1    ; = 14
 
-  ; veritcal rows
-  const pf_num_rows = 11
-  const pf_row_height = 8
+  ; vertical offset
   const pf_scr_y_offset = 3
-  const pf_row0_top = pf_scr_y_offset
-  const pf_row0_bottom = pf_scr_y_offset + pf_row_height
-  const pf_row10_top = ((pf_num_rows - 1) * pf_row_height)
 
   ; optimized Y collision constants
   const m0_y_top_edge = pf_scr_y_offset + 1        ; = 4
@@ -63,19 +58,15 @@ end
   const m1_y_bottom_edge_minus1 = pf_scr_y_offset - missle1_height + 1  ; = 0
   const m1_y_bottom_edge_minus2 = pf_scr_y_offset - missle1_height + 2  ; = 1
 
-  ; missle 0
+  ; missle 0 setup
   COLUP0 = BLUE
-  const missle0_height = 4
   missile0height = missle0_height - 1
-  const missle0_width = 4
   missile0x = 70
   missile0y = 40
 
-  ; missle 1
+  ; missle 1 setup
   COLUP1 = PINK
-  const missle1_height = 4
   missile1height = missle1_height - 1
-  const missle1_width = 4
   missile1x = 90
   missile1y = 40
 
@@ -83,8 +74,8 @@ end
   dim coll_detect_y = c
 
 mainloop
-  NUSIZ0 = %00100000  ; four pixels wide
-  NUSIZ1 = %00100000  ; four pixels wide
+  NUSIZ0 = missle0_width_bin ; four pixels wide
+  NUSIZ1 = missle1_width_bin ; four pixels wide
 
 joy0_up
   if !joy0up goto skip_joy0_up
