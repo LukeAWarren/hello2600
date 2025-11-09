@@ -41,6 +41,11 @@ end
   const pf_column31x_left = ((pf_num_columns - 1) * pf_column_width) + pf_column0x_left
   const pf_column31x_right = ((pf_num_columns - 1) * pf_column_width) + pf_column0x_right
 
+  ; optimized X collision constants (same for both missiles)
+  const m_x_left_edge = pf_scr_x_offset + 1          ; = 19
+  const m_x_right_edge = pf_scr_x_offset - missle0_width + 1  ; = 15
+  const m_x_right_edge_plus1 = m_x_right_edge - 1    ; = 14
+
   ; veritcal rows
   const pf_num_rows = 11
   const pf_row_height = 8
@@ -48,6 +53,15 @@ end
   const pf_row0_top = pf_scr_y_offset
   const pf_row0_bottom = pf_scr_y_offset + pf_row_height
   const pf_row10_top = ((pf_num_rows - 1) * pf_row_height)
+
+  ; optimized Y collision constants
+  const m0_y_top_edge = pf_scr_y_offset + 1        ; = 4
+  const m0_y_bottom_edge = pf_scr_y_offset - missle0_height  ; = -1 (will add to missiley)
+  const m0_y_bottom_edge_minus1 = m0_y_bottom_edge + 1       ; = 0
+  const m1_y_top_edge = pf_scr_y_offset + 2        ; = 5
+  const m1_y_top_edge_minus1 = pf_scr_y_offset + 1 ; = 4
+  const m1_y_bottom_edge_minus1 = pf_scr_y_offset - missle1_height + 1  ; = 0
+  const m1_y_bottom_edge_minus2 = pf_scr_y_offset - missle1_height + 2  ; = 1
 
   ; missle 0
   COLUP0 = BLUE
@@ -78,14 +92,14 @@ joy0_up
     if missile0y <= scr_top_y then goto skip_joy0_up
 
       ; calculate top y pos
-      coll_detect_y = (((missile0y - pf_scr_y_offset) - 1) / 8)
+      coll_detect_y = ((missile0y - m0_y_top_edge) / 8)
 
-      ; get the left right x pos
+      ; get the left x pos
       coll_detect_x = ((missile0x - pf_scr_x_offset) / 4)
       if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_up
 
       ; get the right x pos
-      coll_detect_x = ((missile0x - pf_scr_x_offset + missle0_width - 1) / 4)
+      coll_detect_x = ((missile0x - m_x_right_edge) / 4)
       if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_up
 
         missile0y = missile0y - 1
@@ -98,10 +112,10 @@ joy0_down
     if missile0y >= scr_bot_y then goto skip_joy0_down
 
       ; calculate bottom y pos
-      coll_detect_y = ((missile0y - pf_scr_y_offset + missle0_height) / 8)
+      coll_detect_y = ((missile0y - m0_y_bottom_edge) / 8)
 
       ; get the right x pos
-      coll_detect_x = ((missile0x - pf_scr_x_offset + missle0_width - 1) / 4)
+      coll_detect_x = ((missile0x - m_x_right_edge) / 4)
       if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_down
 
       ; get the left x pos
@@ -117,14 +131,14 @@ joy0_left
 
     if missile0x <= scr_left_x then goto skip_joy0_left
       ; get the left x
-      coll_detect_x = (((missile0x - pf_scr_x_offset) - 1) / 4)
+      coll_detect_x = ((missile0x - m_x_left_edge) / 4)
 
       ; get the top y
       coll_detect_y = ((missile0y - pf_scr_y_offset) / 8)
       if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_left
 
       ; get the bottom y
-      coll_detect_y  = (((missile0y - pf_scr_y_offset + missle0_height) - 1) / 8)
+      coll_detect_y = ((missile0y - m0_y_bottom_edge_minus1) / 8)
       if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_left
 
         missile0x = missile0x - 1
@@ -136,14 +150,14 @@ joy0_right
 
     if missile0x >= scr_right_x then goto skip_joy0_right
       ; get the right x
-      coll_detect_x = (((missile0x - pf_scr_x_offset + missle0_width - 1) + 1) / 4)
+      coll_detect_x = ((missile0x - m_x_right_edge_plus1) / 4)
 
       ; get the top y
       coll_detect_y = ((missile0y - pf_scr_y_offset) / 8)
       if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_right
 
       ; get the bottom y
-      coll_detect_y = (((missile0y - pf_scr_y_offset + missle0_height) - 1) / 8)
+      coll_detect_y = ((missile0y - m0_y_bottom_edge_minus1) / 8)
       if pfread(coll_detect_x, coll_detect_y) then goto skip_joy0_right
 
         missile0x = missile0x + 1
@@ -156,14 +170,14 @@ joy1_up
     if missile1y <= scr_top_y then goto skip_joy1_up
 
       ; calculate top y pos
-      coll_detect_y = ((missile1y - pf_scr_y_offset - 2) / 8)
+      coll_detect_y = ((missile1y - m1_y_top_edge) / 8)
 
-      ; get the left right x pos
+      ; get the left x pos
       coll_detect_x = ((missile1x - pf_scr_x_offset) / 4)
       if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_up
 
       ; get the right x pos
-      coll_detect_x = ((missile1x - pf_scr_x_offset + missle1_width - 1) / 4)
+      coll_detect_x = ((missile1x - m_x_right_edge) / 4)
       if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_up
 
         missile1y = missile1y - 1
@@ -176,10 +190,10 @@ joy1_down
     if missile1y >= scr_bot_y then goto skip_joy1_down
 
       ; calculate bottom y pos
-      coll_detect_y = ((missile1y - pf_scr_y_offset + missle1_height - 1) / 8)
+      coll_detect_y = ((missile1y - m1_y_bottom_edge_minus1) / 8)
 
       ; get the right x pos
-      coll_detect_x = ((missile1x - pf_scr_x_offset + missle1_width - 1) / 4)
+      coll_detect_x = ((missile1x - m_x_right_edge) / 4)
       if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_down
 
       ; get the left x pos
@@ -194,14 +208,14 @@ joy1_left
   if !joy1left goto skip_joy1_left
     if missile1x <= scr_left_x then goto skip_joy1_left
       ; get the left x
-      coll_detect_x = (((missile1x - pf_scr_x_offset) - 1) / 4)
+      coll_detect_x = ((missile1x - m_x_left_edge) / 4)
 
       ; get the top y
-      coll_detect_y = ((missile1y - pf_scr_y_offset - 1) / 8)
+      coll_detect_y = ((missile1y - m1_y_top_edge_minus1) / 8)
       if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_left
 
       ; get the bottom y
-      coll_detect_y = (((missile1y - pf_scr_y_offset + missle1_height) - 2) / 8)
+      coll_detect_y = ((missile1y - m1_y_bottom_edge_minus2) / 8)
       if pfread(coll_detect_x, coll_detect_y) then goto skip_joy1_left
 
         missile1x = missile1x - 1
@@ -213,14 +227,14 @@ joy1_right
 
     if missile1x >= scr_right_x then goto skip_joy1_right
       ; get the right x
-      coll_detect_x = (((missile1x - pf_scr_x_offset + missle1_width - 1) + 1) / 4)
+      coll_detect_x = ((missile1x - m_x_right_edge_plus1) / 4)
 
       ; get the top y
-      coll_detect_y = ((missile1y - pf_scr_y_offset - 1) / 8)
+      coll_detect_y = ((missile1y - m1_y_top_edge_minus1) / 8)
       if pfread(coll_detect_x,coll_detect_y) then goto skip_joy1_right
 
       ; get the bottom y
-      coll_detect_y = (((missile1y - pf_scr_y_offset + missle1_height) - 2) / 8)
+      coll_detect_y = ((missile1y - m1_y_bottom_edge_minus2) / 8)
       if pfread(coll_detect_x,coll_detect_y) then goto skip_joy1_right
 
         missile1x = missile1x + 1
