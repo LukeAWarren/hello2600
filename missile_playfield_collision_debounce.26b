@@ -1,0 +1,273 @@
+  include div_mul.asm
+
+  const noscore = 1
+
+  const WHITE = $0E
+  const PINK = $4A
+  const BLUE = $84
+
+  ; playfield
+  COLUPF = WHITE
+
+  playfield:
+    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    X..............................X
+    X......X.......................X
+    X......X.......................X
+    .......X.......XX..............X
+    X......X........................
+    X......X.......................X
+    X......X.......................X
+    X......X.......................X
+    X..............................X
+    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    ................................
+end
+
+  ; missle pfread offset
+  const scr_left_x = 2
+  const scr_right_x = 158
+  const scr_top_y = 4
+  const scr_bot_y = 88
+
+  ; missile dimensions (defined first, used in collision constants)
+  const missle0_height = 4
+  const missle0_width = 4
+  const missle0_width_bin = %00100000
+  const missle1_height = 4
+  const missle1_width = 4
+  const missle1_width_bin = %00100000
+
+  ; horizontal offset
+  const pf_scr_x_offset = 18
+
+  ; optimized X collision constants (same for both missiles)
+  const m_x_left_edge = pf_scr_x_offset + 1          ; = 19
+  const m_x_right_edge = pf_scr_x_offset - missle0_width + 1  ; = 15
+  const m_x_right_edge_plus1 = m_x_right_edge - 1    ; = 14
+
+  ; vertical offset
+  const pf_scr_y_offset = 3
+
+  ; optimized Y collision constants
+  const m0_y_top_edge = pf_scr_y_offset + 1        ; = 4
+  const m0_y_bottom_edge = pf_scr_y_offset - missle0_height  ; = -1 (will add to missiley)
+  const m0_y_bottom_edge_minus1 = m0_y_bottom_edge + 1       ; = 0
+  const m1_y_top_edge = pf_scr_y_offset + 2        ; = 5
+  const m1_y_top_edge_minus1 = pf_scr_y_offset + 1 ; = 4
+  const m1_y_bottom_edge_minus1 = pf_scr_y_offset - missle1_height + 1  ; = 0
+  const m1_y_bottom_edge_minus2 = pf_scr_y_offset - missle1_height + 2  ; = 1
+
+  ; missle 0 setup
+  COLUP0 = BLUE
+  missile0height = missle0_height - 1
+  missile0x = 70
+  missile0y = 40
+
+  ; missle 1 setup
+  COLUP1 = PINK
+  missile1height = missle1_height - 1
+  missile1x = 90
+  missile1y = 40
+
+  dim coll_detect_x = b
+  dim coll_detect_y = c
+
+  ; frames to wait before auto-repeat
+  const j_debounce_delay = 10
+
+  ; input debouncing for joystick 0
+  dim j0_debounce_up_down = d
+  dim j0_debounce_left_right = e
+
+  ; input debouncing for joystick 1
+  dim j1_debounce_up_down = f
+  dim j1_debounce_left_right = g
+
+mainloop
+  NUSIZ0 = missle0_width_bin ; four pixels wide
+  NUSIZ1 = missle1_width_bin ; four pixels wide
+
+  if !joy0up && !joy0down then j0_debounce_up_down = 0
+
+j0_up
+
+  ; the joy up is not pressed then always set debounce counter 0
+  if !joy0up then goto skip_j0_up
+
+    if missile0y <= scr_top_y then goto skip_j0_up
+
+      ; calculate top y pos
+      coll_detect_y = ((missile0y - m0_y_top_edge) / 8)
+
+      ; get the left x pos
+      coll_detect_x = ((missile0x - pf_scr_x_offset) / 4)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j0_up
+
+      ; get the right x pos
+      coll_detect_x = ((missile0x - m_x_right_edge) / 4)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j0_up
+
+      if j0_debounce_up_down = 0 || j0_debounce_up_down > j_debounce_delay then missile0y = missile0y - 1
+
+      j0_debounce_up_down = j0_debounce_up_down + 1
+
+skip_j0_up
+
+j0_down
+  if !joy0down goto skip_j0_down
+
+    if missile0y >= scr_bot_y then goto skip_j0_down
+
+      ; calculate bottom y pos
+      coll_detect_y = ((missile0y - m0_y_bottom_edge) / 8)
+
+      ; get the right x pos
+      coll_detect_x = ((missile0x - m_x_right_edge) / 4)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j0_down
+
+      ; get the left x pos
+      coll_detect_x = ((missile0x - pf_scr_x_offset) / 4)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j0_down
+
+      if j0_debounce_up_down = 0 || j0_debounce_up_down > j_debounce_delay then missile0y = missile0y + 1
+
+      j0_debounce_up_down = j0_debounce_up_down + 1
+
+skip_j0_down
+
+  if !joy0left && !joy0right then j0_debounce_left_right = 0
+
+j0_left
+  if !joy0left goto skip_j0_left
+
+    if missile0x <= scr_left_x then goto skip_j0_left
+      ; get the left x
+      coll_detect_x = ((missile0x - m_x_left_edge) / 4)
+
+      ; get the top y
+      coll_detect_y = ((missile0y - pf_scr_y_offset) / 8)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j0_left
+
+      ; get the bottom y
+      coll_detect_y = ((missile0y - m0_y_bottom_edge_minus1) / 8)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j0_left
+
+      if j0_debounce_left_right = 0 || j0_debounce_left_right > j_debounce_delay then missile0x = missile0x - 1
+
+      j0_debounce_left_right = j0_debounce_left_right + 1
+
+skip_j0_left
+
+j0_right
+  if !joy0right goto skip_j0_right
+
+    if missile0x >= scr_right_x then goto skip_j0_right
+      ; get the right x
+      coll_detect_x = ((missile0x - m_x_right_edge_plus1) / 4)
+
+      ; get the top y
+      coll_detect_y = ((missile0y - pf_scr_y_offset) / 8)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j0_right
+
+      ; get the bottom y
+      coll_detect_y = ((missile0y - m0_y_bottom_edge_minus1) / 8)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j0_right
+
+      if j0_debounce_left_right = 0 || j0_debounce_left_right > j_debounce_delay then missile0x = missile0x + 1
+
+      j0_debounce_left_right = j0_debounce_left_right + 1
+
+skip_j0_right
+
+  if !joy1up && !joy1down then j1_debounce_up_down = 0
+
+j1_up
+  if !joy1up goto skip_j1_up
+
+    if missile1y <= scr_top_y then goto skip_j1_up
+
+      ; calculate top y pos
+      coll_detect_y = ((missile1y - m1_y_top_edge) / 8)
+
+      ; get the left x pos
+      coll_detect_x = ((missile1x - pf_scr_x_offset) / 4)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j1_up
+
+      ; get the right x pos
+      coll_detect_x = ((missile1x - m_x_right_edge) / 4)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j1_up
+
+      if j1_debounce_up_down = 0 || j1_debounce_up_down > j_debounce_delay then missile1y = missile1y - 1
+
+      j1_debounce_up_down = j1_debounce_up_down + 1
+
+skip_j1_up
+
+j1_down
+  if !joy1down goto skip_j1_down
+
+    if missile1y >= scr_bot_y then goto skip_j1_down
+
+      ; calculate bottom y pos
+      coll_detect_y = ((missile1y - m1_y_bottom_edge_minus1) / 8)
+
+      ; get the right x pos
+      coll_detect_x = ((missile1x - m_x_right_edge) / 4)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j1_down
+
+      ; get the left x pos
+      coll_detect_x = ((missile1x - pf_scr_x_offset) / 4)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j1_down
+
+      if j1_debounce_up_down = 0 || j1_debounce_up_down > j_debounce_delay then missile1y = missile1y + 1
+
+      j1_debounce_up_down = j1_debounce_up_down + 1
+
+skip_j1_down
+
+  if !joy1left && !joy1right then j1_debounce_left_right = 0
+
+j1_left
+  if !joy1left goto skip_j1_left
+    if missile1x <= scr_left_x then goto skip_j1_left
+      ; get the left x
+      coll_detect_x = ((missile1x - m_x_left_edge) / 4)
+
+      ; get the top y
+      coll_detect_y = ((missile1y - m1_y_top_edge_minus1) / 8)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j1_left
+
+      ; get the bottom y
+      coll_detect_y = ((missile1y - m1_y_bottom_edge_minus2) / 8)
+      if pfread(coll_detect_x, coll_detect_y) then goto skip_j1_left
+
+      if j1_debounce_left_right = 0 || j1_debounce_left_right > j_debounce_delay then missile1x = missile1x - 1
+
+      j1_debounce_left_right = j1_debounce_left_right + 1
+
+skip_j1_left
+
+j1_right
+  if !joy1right goto skip_j1_right
+
+    if missile1x >= scr_right_x then goto skip_j1_right
+      ; get the right x
+      coll_detect_x = ((missile1x - m_x_right_edge_plus1) / 4)
+
+      ; get the top y
+      coll_detect_y = ((missile1y - m1_y_top_edge_minus1) / 8)
+      if pfread(coll_detect_x,coll_detect_y) then goto skip_j1_right
+
+      ; get the bottom y
+      coll_detect_y = ((missile1y - m1_y_bottom_edge_minus2) / 8)
+      if pfread(coll_detect_x,coll_detect_y) then goto skip_j1_right
+
+      if j1_debounce_left_right = 0 || j1_debounce_left_right > j_debounce_delay then missile1x = missile1x + 1
+
+      j1_debounce_left_right = j1_debounce_left_right + 1
+
+skip_j1_right
+
+  drawscreen
+  goto mainloop
