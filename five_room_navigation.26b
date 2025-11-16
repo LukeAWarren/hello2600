@@ -24,24 +24,7 @@
 
   ; initialize the first room
   dim room_number = h
-  room_number = 1
-  ;TODO: try to get ride of this with a room 0 check at the bottom of the game loop
-  COLUBK = BLACK
-  COLUPF = WHITE
-  playfield:
-    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    X..............................X
-    X..............................X
-    X..............................X
-    ...............................X
-    ...............................X
-    X..............................X
-    X..............................X
-    X..............................X
-    X..............................X
-    XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    ................................
-end
+  room_number = 0
 
   const room_right = 1
   const room_middle = 2
@@ -302,6 +285,7 @@ skip_j1_right
 
 _begin_boundary_check
 
+  if room_number = 0 then goto _inititial_game_room
   if room_number = room_right then goto _room_right_boundary_check
   if room_number = room_middle then goto _room_middle_boundary_check
   if room_number = room_left then goto _room_left_boundary_check
@@ -315,6 +299,7 @@ _end_boundary_check
 
 _room_right
   if room_number = room_middle then missile0x = entry_gate_left_x : missile1x = entry_gate_left_x
+_inititial_game_room
   room_number = room_right
   COLUBK = BLACK
   COLUPF = WHITE
@@ -340,7 +325,7 @@ _skip_room_right_boundary_check
 
 _room_middle
   ; depending on which room we came from
-  ; set the correct horizonal starting position
+  ; set the correct horizonal or vertical starting position
   if room_number = room_right then missile0x = entry_gate_right_x : missile1x = entry_gate_right_x
   if room_number = room_left then missile0x = entry_gate_left_x : missile1x = entry_gate_left_x
   if room_number = room_top then missile0y = entry_gate_top_y : missile1y = entry_gate_top_y
