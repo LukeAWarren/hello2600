@@ -311,25 +311,35 @@ _begin_boundary_check
 _end_boundary_check
 
 
-  ;TODO: somehow, I don't want to calculate the movement for the first time
-  ; the players enter the room with p1
-  
-  ; if player1 is in the same room as the missiles
-  ; then display it
-  if p1_room = room_number then goto _draw_p1
-  ; since p1 is not in the same room as the missiles then hide p1
-  ; if we've already hiddent p1 then don't hide it again
-  if player1y = offscrn_y then goto _hide_p1
-_save_p1_pos
-  ; save current position before hiding
+;TODO: i can probably save some cycles by moving around the order of the decisions
+;      and eliminating parts of the decisions statements that are aren't needed
+;      based on which decisions have already been made
+_begin_p1_logic
+  ; always skip one frame after showing p1, m0 and m1 in the room together
+  ; this makes it seem like p1 has to notice in the room them before moving toward them
+  if p1_room = room_number && player1y = offscrn_y then goto _show_p1
+  ; if p1 is in the same room as the missiles and it's currently on the screen
+  ; then calculate a new position for p1  
+  if p1_room = room_number && player1y <> offscrn_y then goto _calc_pos_and_move_p1
+  ; if the missiles are not in the room with the player
+  ; but the player is visible then hide it
+  if p1_room <> room_number && player1y <> offscrn_y then goto _save_and_hide_p1
+  ; if the missiles are not in the room with the player
+  ; and the player is already offscreen don't do anything
+  if p1_room <> room_number && player1y = offscrn_y then goto _end_p1_logic  
+_save_and_hide_p1
   p1_y = player1y
-_hide_p1
   player1y = offscrn_y
-  goto _skip_p1_logic
-_draw_p1
+  goto _end_p1_logic
+_calc_pos_and_move_p1
+  ;TODO: find the x and y midpoint between m0 and m1
+  ;      then move p1 one pixel toward the endpoint between m0 and m1
+  ;      but be smart enough to wait one frame before starting to move p1 toward m0 and m1
+_move_p1
+_show_p1
   ; restore saved position
   player1y = p1_y
-_skip_p1_logic
+_end_p1_logic
 
   drawscreen
   goto mainloop
