@@ -21,6 +21,7 @@
   ; player colors
   const PINK = $4A
   const BLUE = $84
+  const player1_half_width = 5
 
   ; initialize the first room
   dim room_number = h
@@ -90,6 +91,9 @@
   ; frames to wait before auto-repeat
   const j_debounce_delay = 4
 
+  ; frames between player1 steps toward midpoint
+  const p1_move_delay = 3
+
   ; input debouncing for joystick 0
   dim j0_debounce_up_down = d
   dim j0_debounce_left_right = e
@@ -100,6 +104,11 @@
 
   dim p1_room = i
   dim p1_y = j
+  dim p1_skip_move = k
+  dim p1_target_x = l
+  dim p1_target_y = m
+  dim p1_mid_delta = n
+  dim p1_move_counter = o
 
   p1_room = 1
 
@@ -330,15 +339,39 @@ _begin_p1_logic
 _save_and_hide_p1
   p1_y = player1y
   player1y = offscrn_y
+  p1_move_counter = 0
   goto _end_p1_logic
 _calc_pos_and_move_p1
-  ;TODO: find the x and y midpoint between m0 and m1
-  ;      then move p1 one pixel toward the endpoint between m0 and m1
-  ;      but be smart enough to wait one frame before starting to move p1 toward m0 and m1
-_move_p1
+  ; skip the first frame after appearing in a room
+  if p1_skip_move then p1_skip_move = p1_skip_move - 1 : goto _end_p1_logic
+
+  ; slow pursuit so it only steps every few frames
+  if p1_move_counter < p1_move_delay then p1_move_counter = p1_move_counter + 1 : goto _end_p1_logic
+  p1_move_counter = 0
+
+  ; calculate midpoint X
+  if missile0x <= missile1x then p1_target_x = missile0x : p1_mid_delta = missile1x - missile0x
+  if missile0x > missile1x then p1_target_x = missile1x : p1_mid_delta = missile0x - missile1x
+  p1_mid_delta = p1_mid_delta / 2
+  p1_target_x = p1_target_x + p1_mid_delta - player1_half_width
+
+  ; calculate midpoint Y
+  if missile0y <= missile1y then p1_target_y = missile0y : p1_mid_delta = missile1y - missile0y
+  if missile0y > missile1y then p1_target_y = missile1y : p1_mid_delta = missile0y - missile1y
+  p1_mid_delta = p1_mid_delta / 2
+  p1_target_y = p1_target_y + p1_mid_delta
+
+  ; move toward midpoint, one pixel per axis each frame
+  if player1x < p1_target_x then player1x = player1x + 1
+  if player1x > p1_target_x then player1x = player1x - 1
+  if player1y < p1_target_y then player1y = player1y + 1
+  if player1y > p1_target_y then player1y = player1y - 1
+  goto _end_p1_logic
 _show_p1
   ; restore saved position
   player1y = p1_y
+  p1_skip_move = 1
+  p1_move_counter = 0
 _end_p1_logic
 
   drawscreen
