@@ -22,6 +22,8 @@
   const PINK = $4A
   const BLUE = $84
   const player1_half_width = 5
+  const player1_half_height = 2
+  const p1_gate_threshold = 2
 
   ; initialize the first room
   dim room_number = h
@@ -109,6 +111,10 @@
   dim p1_target_y = m
   dim p1_mid_delta = n
   dim p1_move_counter = o
+  dim p1_gate_coord = p
+  dim p1_dest_coord = q
+  dim p1_target_room = r
+  dim p1_align_midpoint = s
 
   p1_room = 1
 
@@ -323,6 +329,7 @@ _end_boundary_check
 ;TODO: i can probably save some cycles by moving around the order of the decisions
 ;      and eliminating parts of the decisions statements that are aren't needed
 ;      based on which decisions have already been made
+  if p1_align_midpoint then gosub _p1_place_at_midpoint
 _begin_p1_logic
   ; always skip one frame after showing p1, m0 and m1 in the room together
   ; this makes it seem like p1 has to notice in the room them before moving toward them
@@ -377,6 +384,53 @@ _end_p1_logic
   drawscreen
   goto mainloop
 
+_p1_place_at_midpoint
+  if p1_room <> room_number then return
+  if player1y = offscrn_y then return
+
+  if missile0x <= missile1x then p1_target_x = missile0x : p1_mid_delta = missile1x - missile0x
+  if missile0x > missile1x then p1_target_x = missile1x : p1_mid_delta = missile0x - missile1x
+  p1_mid_delta = p1_mid_delta / 2
+  player1x = p1_target_x + p1_mid_delta - player1_half_width
+
+  if missile0y <= missile1y then p1_target_y = missile0y : p1_mid_delta = missile1y - missile0y
+  if missile0y > missile1y then p1_target_y = missile1y : p1_mid_delta = missile0y - missile1y
+  p1_mid_delta = p1_mid_delta / 2
+  player1y = p1_target_y + p1_mid_delta
+
+  p1_align_midpoint = 0
+  return
+
+_p1_try_follow_horizontal
+  if p1_room <> room_number then return
+  if player1y = offscrn_y then return
+  if player1y < entry_gate_top_y then return
+  if player1y > entry_gate_bot_y then return
+  p1_mid_delta = player1x + player1_half_width
+  if p1_mid_delta < p1_gate_coord - p1_gate_threshold then return
+  if p1_mid_delta > p1_gate_coord + p1_gate_threshold then return
+  p1_room = p1_target_room
+  player1x = p1_dest_coord
+  p1_skip_move = 1
+  p1_move_counter = 0
+  p1_align_midpoint = 1
+  return
+
+_p1_try_follow_vertical
+  if p1_room <> room_number then return
+  if player1y = offscrn_y then return
+  if player1x < entry_gate_left_x then return
+  if player1x > entry_gate_right_x then return
+  p1_mid_delta = player1y + player1_half_height
+  if p1_mid_delta < p1_gate_coord - p1_gate_threshold then return
+  if p1_mid_delta > p1_gate_coord + p1_gate_threshold then return
+  p1_room = p1_target_room
+  player1y = p1_dest_coord
+  p1_skip_move = 1
+  p1_move_counter = 0
+  p1_align_midpoint = 1
+  return
+
 _room_right
   if room_number = room_middle then missile0x = entry_gate_left_x : missile1x = entry_gate_left_x
 _inititial_game_room
@@ -399,7 +453,7 @@ _inititial_game_room
 end
   goto _end_boundary_check
 _room_right_boundary_check
-  if missile0x <= scr_left_x && missile1x <= scr_left_x then goto _room_middle
+  if missile0x <= scr_left_x && missile1x <= scr_left_x then p1_target_room = room_middle : p1_gate_coord = scr_left_x : p1_dest_coord = entry_gate_right_x : gosub _p1_try_follow_horizontal : goto _room_middle
   goto _end_boundary_check
 _skip_room_right_boundary_check
 
@@ -429,10 +483,10 @@ _room_middle
 end
   goto _end_boundary_check
 _room_middle_boundary_check
-  if missile0x >= scr_right_x && missile1x >= scr_right_x then goto _room_right
-  if missile0x <= scr_left_x && missile1x <= scr_left_x then goto _room_left
-  if missile0y <= scr_top_y && missile1y <= scr_top_y then goto _room_top
-  if missile0y >= scr_bot_y && missile1y >= scr_bot_y then goto _room_bottom
+  if missile0x >= scr_right_x && missile1x >= scr_right_x then p1_target_room = room_right : p1_gate_coord = scr_right_x : p1_dest_coord = entry_gate_left_x : gosub _p1_try_follow_horizontal : goto _room_right
+  if missile0x <= scr_left_x && missile1x <= scr_left_x then p1_target_room = room_left : p1_gate_coord = scr_left_x : p1_dest_coord = entry_gate_right_x : gosub _p1_try_follow_horizontal : goto _room_left
+  if missile0y <= scr_top_y && missile1y <= scr_top_y then p1_target_room = room_top : p1_gate_coord = entry_gate_top_y : p1_dest_coord = entry_gate_bot_y : gosub _p1_try_follow_vertical : goto _room_top
+  if missile0y >= scr_bot_y && missile1y >= scr_bot_y then p1_target_room = room_bottom : p1_gate_coord = scr_bot_y : p1_dest_coord = entry_gate_top_y : gosub _p1_try_follow_vertical : goto _room_bottom
   goto _end_boundary_check
 _skip_room_middle_boundary_check
 
@@ -457,7 +511,7 @@ _room_left
 end
   goto _end_boundary_check
 _room_left_boundary_check
-  if missile0x >= scr_right_x && missile1x >= scr_right_x then goto _room_middle
+  if missile0x >= scr_right_x && missile1x >= scr_right_x then p1_target_room = room_middle : p1_gate_coord = scr_right_x : p1_dest_coord = entry_gate_left_x : gosub _p1_try_follow_horizontal : goto _room_middle
   goto _end_boundary_check
 _skip_room_left_boundary_check
 
@@ -482,7 +536,7 @@ _room_top
 end
   goto _end_boundary_check
 _room_top_boundary_check
-  if missile0y >= scr_bot_y && missile1y >= scr_bot_y then goto _room_middle
+  if missile0y >= scr_bot_y && missile1y >= scr_bot_y then p1_target_room = room_middle : p1_gate_coord = scr_bot_y : p1_dest_coord = entry_gate_top_y : gosub _p1_try_follow_vertical : goto _room_middle
   goto _end_boundary_check
 _skip_room_top_boundary_check
 
@@ -507,6 +561,6 @@ _room_bottom
 end
   goto _end_boundary_check
 _room_bottom_boundary_check
-  if missile0y <= scr_top_y && missile1y <= scr_top_y then goto _room_middle
+  if missile0y <= scr_top_y && missile1y <= scr_top_y then p1_target_room = room_middle : p1_gate_coord = scr_top_y : p1_dest_coord = entry_gate_bot_y : gosub _p1_try_follow_vertical : goto _room_middle
   goto _end_boundary_check
 _skip_room_bottom_boundary_check
